@@ -9,9 +9,10 @@ urlpatterns = [
     path('jobs/', views.job_list, name='job_list'),
     path('jobs/<int:job_id>/', views.job_detail, name='job_detail'),
     path('jobs/<int:job_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('jobs/<int:job_id>/apply/', views.apply_job, name='apply_job'),
     path('favorites/', views.favorites, name='favorites'),
     path('applications/', views.applications, name='applications'),
     # Маршруты для авторизации
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ] 

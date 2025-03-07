@@ -9,6 +9,77 @@
     </div>
 </div>
 
+<!-- Форма фильтрации -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="job_type" class="form-label">Тип работы</label>
+                <select name="job_type" id="job_type" class="form-select">
+                    <option value="">Все типы</option>
+                    <option value="internship" {% if request.GET.job_type == 'internship' %}selected{% endif %}>Стажировка</option>
+                    <option value="part_time" {% if request.GET.job_type == 'part_time' %}selected{% endif %}>Частичная занятость</option>
+                    <option value="full_time" {% if request.GET.job_type == 'full_time' %}selected{% endif %}>Полная занятость</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="department" class="form-label">Департамент</label>
+                <select name="department" id="department" class="form-select">
+                    <option value="">Все департаменты</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"s" %}selected{% endif %}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="schedule" class="form-label">График</label>
+                <select name="schedule" id="schedule" class="form-select">
+                    <option value="">Все графики</option>
+                    <option value="flexible" {% if request.GET.schedule == 'flexible' %}selected{% endif %}>Гибкий</option>
+                    <option value="fixed" {% if request.GET.schedule == 'fixed' %}selected{% endif %}>Фиксированный</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="sort" class="form-label">Сортировка</label>
+                <select name="sort" id="sort" class="form-select">
+                    <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Сначала новые</option>
+                    <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Сначала старые</option>
+                    <option value="salary" {% if request.GET.sort == 'salary' %}selected{% endif %}>По зарплате (возр.)</option>
+                    <option value="-salary" {% if request.GET.sort == '-salary' %}selected{% endif %}>По зарплате (убыв.)</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <label class="form-label">Навыки</label>
+                <div class="row">
+                    {% for skill in skills %}
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="skills" value="{{ skill.id }}" 
+                                   id="skill{{ skill.id }}" {% if skill.id|stringformat:"s" in request.GET.skills %}checked{% endif %}>
+                            <label class="form-check-label" for="skill{{ skill.id }}">
+                                {{ skill.name }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                <a href="{% url 'job_list' %}" class="btn btn-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список вакансий -->
 <div class="row">
     {% for job in jobs %}
     <div class="col-md-6 mb-4">

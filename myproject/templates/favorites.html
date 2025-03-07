@@ -21,8 +21,8 @@
                     </div>
                     <div class="text-muted">
                         <small>
-                            <i class="bi bi-clock"></i> {{ job.schedule }} |
-                            <i class="bi bi-cash"></i> {{ job.salary }} руб/час |
+                            <i class="bi bi-briefcase"></i> {{ job.get_job_type_display }} |
+                            <i class="bi bi-cash"></i> {{ job.salary }} ₽ |
                             <i class="bi bi-calendar"></i> До {{ job.deadline|date:"d.m.Y" }}
                         </small>
                     </div>
@@ -42,4 +42,47 @@
         У вас пока нет избранных вакансий.
     </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtns = document.querySelectorAll('.favorite-btn');
+    favoriteBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch(`/jobs/${jobId}/favorite/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_favorite) {
+                    this.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                } else {
+                    this.innerHTML = '<i class="bi bi-heart"></i>';
+                }
+            });
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %} 

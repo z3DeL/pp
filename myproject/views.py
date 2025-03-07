@@ -5,6 +5,11 @@ from django.db.models import Q
 from .models import Job, Department, Skill, Application, UserSkill, JobSkill
 from django.http import JsonResponse
 from django.contrib import messages
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.views.decorators.http import require_POST
+from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 
 def job_list(request):
     # Получаем параметры фильтрации
@@ -83,4 +88,93 @@ def favorites(request):
 @login_required
 def applications(request):
     user_applications = Application.objects.filter(applicant=request.user)
-    return render(request, 'applications.html', {'applications': user_applications}) 
+    return render(request, 'applications.html', {'applications': user_applications})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                next_url = request.POST.get('next')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('home')
+            else:
+                messages.error(request, 'Неверное имя пользователя или пароль.')
+        else:
+            messages.error(request, 'Неверное имя пользователя или пароль.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'registration/login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Вы успешно вышли из системы.')
+    return redirect('home')
+
+@login_required
+@require_POST
+def apply_for_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    
+    # Проверяем, не подана ли уже заявка
+    if Application.objects.filter(job=job, applicant=request.user).exists():
+        messages.error(request, 'Вы уже подали заявку на эту вакансию.')
+        return redirect('job_detail', job_id=job_id)
+    
+    # Проверяем, не истек ли срок подачи
+    if job.deadline < timezone.now():
+        messages.error(request, 'Срок подачи заявки истек.')
+        return redirect('job_detail', job_id=job_id)
+    
+    # Создаем новую заявку
+    application = Application.objects.create(
+        job=job,
+        applicant=request.user,
+        status='pending',
+        cover_letter=request.POST.get('cover_letter', ''),
+        resume=request.FILES.get('resume')
+    )
+    
+    messages.success(request, 'Ваша заявка успешно отправлена.')
+    return redirect('applications')
+
+@login_required
+def cancel_application(request, application_id):
+    application = get_object_or_404(Application, id=application_id, applicant=request.user)
+    
+    if application.status == 'pending':
+        application.delete()
+        messages.success(request, 'Заявка успешно отменена.')
+    else:
+        messages.error(request, 'Невозможно отменить заявку в текущем статусе.')
+    
+    return redirect('applications')
+
+@login_required
+def apply_job(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    
+    # Проверяем, не подал ли пользователь уже заявку
+    if Application.objects.filter(job=job, applicant=request.user).exists():
+        messages.error(request, 'Вы уже подали заявку на эту вакансию.')
+        return redirect('job_detail', job_id=job_id)
+    
+    # Проверяем срок подачи заявки
+    if job.deadline < timezone.now():
+        messages.error(request, 'Срок подачи заявки истек.')
+        return redirect('job_detail', job_id=job_id)
+    
+    # Создаем новую заявку
+    Application.objects.create(
+        job=job,
+        applicant=request.user,
+        status='pending'
+    )
+    
+    messages.success(request, 'Ваша заявка успешно отправлена.')
+    return redirect('job_detail', job_id=job_id) 
