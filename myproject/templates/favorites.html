@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Избранные вакансии{% endblock %}
+
+{% block content %}
+<h2>Избранные вакансии</h2>
+
+{% if jobs %}
+    {% for job in jobs %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-title">{{ job.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ job.department.name }}</h6>
+                    <p class="card-text">{{ job.description|truncatewords:30 }}</p>
+                    <div class="mb-2">
+                        {% for skill in job.required_skills.all %}
+                        <span class="badge bg-secondary">{{ skill.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="text-muted">
+                        <small>
+                            <i class="bi bi-clock"></i> {{ job.schedule }} |
+                            <i class="bi bi-cash"></i> {{ job.salary }} руб/час |
+                            <i class="bi bi-calendar"></i> До {{ job.deadline|date:"d.m.Y" }}
+                        </small>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm favorite-btn" data-job-id="{{ job.id }}">
+                        <i class="bi bi-heart-fill"></i>
+                    </button>
+                </div>
+            </div>
+            <a href="{% url 'job_detail' job.id %}" class="btn btn-primary mt-2">Подробнее</a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-info">
+        У вас пока нет избранных вакансий.
+    </div>
+{% endif %}
+{% endblock %} 
