@@ -1,0 +1,210 @@
+[
+    {
+        "model": "myproject.user",
+        "pk": 1,
+        "fields": {
+            "username": "admin",
+            "email": "admin@example.com",
+            "role": "admin",
+            "is_active": true,
+            "created_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.user",
+        "pk": 2,
+        "fields": {
+            "username": "employer1",
+            "email": "employer1@example.com",
+            "role": "employer",
+            "is_active": true,
+            "created_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.user",
+        "pk": 3,
+        "fields": {
+            "username": "student1",
+            "email": "student1@example.com",
+            "role": "student",
+            "is_active": true,
+            "created_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.department",
+        "pk": 1,
+        "fields": {
+            "name": "Информационные технологии",
+            "description": "Отдел разработки программного обеспечения",
+            "location": "Москва",
+            "contact_email": "it@example.com",
+            "created_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.department",
+        "pk": 2,
+        "fields": {
+            "name": "Маркетинг",
+            "description": "Отдел маркетинга и рекламы",
+            "location": "Санкт-Петербург",
+            "contact_email": "marketing@example.com",
+            "created_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.skill",
+        "pk": 1,
+        "fields": {
+            "name": "Python",
+            "category": "technical"
+        }
+    },
+    {
+        "model": "myproject.skill",
+        "pk": 2,
+        "fields": {
+            "name": "Django",
+            "category": "technical"
+        }
+    },
+    {
+        "model": "myproject.skill",
+        "pk": 3,
+        "fields": {
+            "name": "JavaScript",
+            "category": "technical"
+        }
+    },
+    {
+        "model": "myproject.skill",
+        "pk": 4,
+        "fields": {
+            "name": "Коммуникабельность",
+            "category": "soft"
+        }
+    },
+    {
+        "model": "myproject.job",
+        "pk": 1,
+        "fields": {
+            "title": "Python-разработчик",
+            "description": "Разработка веб-приложений на Python и Django",
+            "requirements": "Опыт работы с Python, Django, SQL",
+            "salary": "80000",
+            "department": 1,
+            "employer": 2,
+            "job_type": "internship",
+            "created_at": "2024-03-07T10:00:00Z",
+            "deadline": "2024-04-07T10:00:00Z",
+            "is_active": true
+        }
+    },
+    {
+        "model": "myproject.job",
+        "pk": 2,
+        "fields": {
+            "title": "Маркетолог",
+            "description": "Разработка и реализация маркетинговых стратегий",
+            "requirements": "Опыт в digital-маркетинге, аналитика",
+            "salary": "70000",
+            "department": 2,
+            "employer": 2,
+            "job_type": "part_time",
+            "created_at": "2024-03-07T10:00:00Z",
+            "deadline": "2024-04-07T10:00:00Z",
+            "is_active": true
+        }
+    },
+    {
+        "model": "myproject.jobskill",
+        "pk": 1,
+        "fields": {
+            "job": 1,
+            "skill": 1,
+            "is_required": true,
+            "level": "intermediate"
+        }
+    },
+    {
+        "model": "myproject.jobskill",
+        "pk": 2,
+        "fields": {
+            "job": 1,
+            "skill": 2,
+            "is_required": true,
+            "level": "intermediate"
+        }
+    },
+    {
+        "model": "myproject.jobskill",
+        "pk": 3,
+        "fields": {
+            "job": 1,
+            "skill": 4,
+            "is_required": true,
+            "level": "intermediate"
+        }
+    },
+    {
+        "model": "myproject.userskill",
+        "pk": 1,
+        "fields": {
+            "user": 3,
+            "skill": 1,
+            "level": "beginner",
+            "verified": false
+        }
+    },
+    {
+        "model": "myproject.application",
+        "pk": 1,
+        "fields": {
+            "job": 1,
+            "applicant": 3,
+            "status": "pending",
+            "cover_letter": "Здравствуйте! Я заинтересован в вакансии Python-разработчика.",
+            "resume": "resumes/student1_resume.pdf",
+            "created_at": "2024-03-07T10:00:00Z",
+            "updated_at": "2024-03-07T10:00:00Z"
+        }
+    },
+    {
+        "model": "myproject.message",
+        "pk": 1,
+        "fields": {
+            "sender": 2,
+            "receiver": 3,
+            "application": 1,
+            "content": "Здравствуйте! Спасибо за вашу заявку. Мы рассмотрим её в ближайшее время.",
+            "created_at": "2024-03-07T10:00:00Z",
+            "is_read": false
+        }
+    },
+    {
+        "model": "myproject.review",
+        "pk": 1,
+        "fields": {
+            "job": 1,
+            "reviewer": 3,
+            "rating": 5,
+            "comment": "Отличная вакансия для начинающих разработчиков!",
+            "created_at": "2024-03-07T10:00:00Z",
+            "is_anonymous": false
+        }
+    },
+    {
+        "model": "myproject.notification",
+        "pk": 1,
+        "fields": {
+            "user": 3,
+            "title": "Новое сообщение",
+            "content": "У вас есть новое сообщение от работодателя",
+            "type": "new_message",
+            "created_at": "2024-03-07T10:00:00Z",
+            "is_read": false
+        }
+    }
+] 
