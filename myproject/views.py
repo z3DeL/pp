@@ -10,7 +10,24 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Получить список всех вакансий",
+    manual_parameters=[
+        openapi.Parameter('job_type', openapi.IN_QUERY, description="Тип вакансии", type=openapi.TYPE_STRING),
+        openapi.Parameter('department', openapi.IN_QUERY, description="ID отдела", type=openapi.TYPE_INTEGER),
+        openapi.Parameter('skills', openapi.IN_QUERY, description="ID навыков", type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER)),
+        openapi.Parameter('schedule', openapi.IN_QUERY, description="График работы", type=openapi.TYPE_STRING),
+        openapi.Parameter('sort', openapi.IN_QUERY, description="Сортировка", type=openapi.TYPE_STRING),
+        openapi.Parameter('page', openapi.IN_QUERY, description="Номер страницы", type=openapi.TYPE_INTEGER),
+    ]
+)
+@api_view(['GET'])
 def job_list(request):
     # Получаем параметры фильтрации
     job_type = request.GET.get('job_type')
@@ -57,6 +74,14 @@ def job_list(request):
     
     return render(request, 'job_list.html', context)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Получить детальную информацию о вакансии",
+    manual_parameters=[
+        openapi.Parameter('job_id', openapi.IN_PATH, description="ID вакансии", type=openapi.TYPE_INTEGER),
+    ]
+)
+@api_view(['GET'])
 def job_detail(request, job_id):
     job = get_object_or_404(Job, id=job_id)
     required_skills = JobSkill.objects.filter(job=job, is_required=True)
@@ -69,7 +94,20 @@ def job_detail(request, job_id):
     }
     return render(request, 'job_detail.html', context)
 
-@login_required
+@swagger_auto_schema(
+    method='post',
+    operation_description="Добавить/удалить вакансию из избранного",
+    manual_parameters=[
+        openapi.Parameter('job_id', openapi.IN_PATH, description="ID вакансии", type=openapi.TYPE_INTEGER),
+    ],
+    responses={
+        200: openapi.Response("Успешное выполнение"),
+        404: openapi.Response("Вакансия не найдена"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@require_POST
 def toggle_favorite(request, job_id):
     job = get_object_or_404(Job, id=job_id)
     if request.user in job.favorites.all():
@@ -116,9 +154,28 @@ def logout_view(request):
     messages.success(request, 'Вы успешно вышли из системы.')
     return redirect('home')
 
-@login_required
-@require_POST
-def apply_for_job(request, job_id):
+@swagger_auto_schema(
+    method='post',
+    operation_description="Подать заявку на вакансию",
+    manual_parameters=[
+        openapi.Parameter('job_id', openapi.IN_PATH, description="ID вакансии", type=openapi.TYPE_INTEGER),
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'cover_letter': openapi.Schema(type=openapi.TYPE_STRING),
+            'resume': openapi.Schema(type=openapi.TYPE_FILE),
+        }
+    ),
+    responses={
+        200: openapi.Response("Заявка успешно создана"),
+        400: openapi.Response("Ошибка валидации"),
+        404: openapi.Response("Вакансия не найдена"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def apply_job(request, job_id):
     job = get_object_or_404(Job, id=job_id)
     
     # Проверяем, не подана ли уже заявка
@@ -153,28 +210,4 @@ def cancel_application(request, application_id):
     else:
         messages.error(request, 'Невозможно отменить заявку в текущем статусе.')
     
-    return redirect('applications')
-
-@login_required
-def apply_job(request, job_id):
-    job = get_object_or_404(Job, id=job_id)
-    
-    # Проверяем, не подал ли пользователь уже заявку
-    if Application.objects.filter(job=job, applicant=request.user).exists():
-        messages.error(request, 'Вы уже подали заявку на эту вакансию.')
-        return redirect('job_detail', job_id=job_id)
-    
-    # Проверяем срок подачи заявки
-    if job.deadline < timezone.now():
-        messages.error(request, 'Срок подачи заявки истек.')
-        return redirect('job_detail', job_id=job_id)
-    
-    # Создаем новую заявку
-    Application.objects.create(
-        job=job,
-        applicant=request.user,
-        status='pending'
-    )
-    
-    messages.success(request, 'Ваша заявка успешно отправлена.')
-    return redirect('job_detail', job_id=job_id) 
+    return redirect('applications') 
