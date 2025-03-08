@@ -14,6 +14,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .forms import ApplicationForm, UserRegistrationForm
 
 @swagger_auto_schema(
     method='get',
@@ -210,4 +211,55 @@ def cancel_application(request, application_id):
     else:
         messages.error(request, 'Невозможно отменить заявку в текущем статусе.')
     
-    return redirect('applications') 
+    return redirect('applications')
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Страница регистрации пользователя",
+    responses={
+        200: openapi.Response("Страница регистрации"),
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Регистрация нового пользователя",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
+            'password1': openapi.Schema(type=openapi.TYPE_STRING),
+            'password2': openapi.Schema(type=openapi.TYPE_STRING),
+            'role': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    ),
+    responses={
+        200: openapi.Response("Пользователь успешно зарегистрирован"),
+        400: openapi.Response("Ошибка валидации"),
+    }
+)
+@api_view(['GET', 'POST'])
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'Регистрация успешно завершена. Теперь вы можете войти.')
+            return redirect('login')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Главная страница",
+    responses={
+        200: openapi.Response("Главная страница"),
+    }
+)
+@api_view(['GET'])
+def home(request):
+    latest_jobs = Job.objects.filter(is_active=True).order_by('-created_at')[:5]
+    return render(request, 'home.html', {'latest_jobs': latest_jobs}) 

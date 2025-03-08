@@ -2,11 +2,13 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
-    role = models.CharField(max_length=20, choices=[
+    ROLE_CHOICES = [
         ('student', 'Студент'),
         ('employer', 'Работодатель'),
-        ('admin', 'Администратор')
-    ])
+        ('admin', 'Администратор'),
+    ]
+    
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

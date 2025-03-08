@@ -22,16 +22,16 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.job_list, name='home'),
+    path('', views.home, name='home'),
     path('jobs/', views.job_list, name='job_list'),
     path('jobs/<int:job_id>/', views.job_detail, name='job_detail'),
     path('jobs/<int:job_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('jobs/<int:job_id>/apply/', views.apply_job, name='apply_job'),
     path('favorites/', views.favorites, name='favorites'),
     path('applications/', views.applications, name='applications'),
-    # Маршруты для авторизации
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('register/', views.register, name='register'),
     
     # Swagger URLs
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
