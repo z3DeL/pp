@@ -71,7 +71,7 @@
 
         {% if user.is_authenticated and user.role == 'student' %}
             <div class="mt-4">
-                <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Подать заявку</a>
+                <button class="btn btn-primary apply-btn" data-job-id="{{ job.id }}">Подать заявку</button>
             </div>
         {% endif %}
     </div>
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             const jobId = this.dataset.jobId;
-            fetch(`/jobs/${jobId}/favorite/`, {
+            fetch(`/api/jobs/${jobId}/favorite/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),
@@ -98,6 +98,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.innerHTML = '<i class="bi bi-heart-fill"></i> В избранном';
                 } else {
                     this.innerHTML = '<i class="bi bi-heart"></i> В избранное';
+                }
+            });
+        });
+    }
+
+    const applyBtn = document.querySelector('.apply-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch(`/api/jobs/${jobId}/apply/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    alert('Заявка успешно отправлена!');
+                } else {
+                    alert(data.error || 'Произошла ошибка при отправке заявки.');
                 }
             });
         });

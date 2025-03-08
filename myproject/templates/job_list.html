@@ -73,7 +73,7 @@
             
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Применить фильтры</button>
-                <a href="{% url 'job_list' %}" class="btn btn-secondary">Сбросить</a>
+                <a href="/api/jobs/" class="btn btn-secondary">Сбросить</a>
             </div>
         </form>
     </div>
@@ -86,7 +86,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">
-                    <a href="{% url 'job_detail' job.id %}" class="text-decoration-none">{{ job.title }}</a>
+                    <a href="/api/jobs/{{ job.id }}/" class="text-decoration-none">{{ job.title }}</a>
                 </h5>
                 <h6 class="card-subtitle mb-2 text-muted">{{ job.department.name }}</h6>
                 <p class="card-text">{{ job.description|truncatewords:30 }}</p>
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     favoriteBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const jobId = this.dataset.jobId;
-            fetch(`/jobs/${jobId}/favorite/`, {
+            fetch(`/api/jobs/${jobId}/favorite/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),

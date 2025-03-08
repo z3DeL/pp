@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои заявки{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">
+        {% if user.role == 'employer' %}
+            Заявки на вакансии
+        {% else %}
+            Мои заявки
+        {% endif %}
+    </h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group">
+                {% for application in applications %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">
+                                <a href="{% url 'job_detail' application.job.id %}" class="text-decoration-none">
+                                    {{ application.job.title }}
+                                </a>
+                            </h5>
+                            <small>{{ application.created_at|date:"d.m.Y" }}</small>
+                        </div>
+                        <p class="mb-1">{{ application.job.department.name }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-{{ application.status_color }}">
+                                    {{ application.get_status_display }}
+                                </span>
+                            </div>
+                            {% if user.role == 'student' and application.status == 'pending' %}
+                                <form method="post" action="{% url 'cancel_application' application.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Отменить</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="alert alert-info">
+                        {% if user.role == 'employer' %}
+                            Пока нет заявок на ваши вакансии.
+                        {% else %}
+                            Вы еще не подали ни одной заявки.
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

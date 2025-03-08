@@ -33,7 +33,7 @@
                     {% endif %}
                 </div>
             </div>
-            <a href="{% url 'job_detail' application.job.id %}" class="btn btn-primary mt-2">Просмотреть вакансию</a>
+            <a href="/api/jobs/{{ application.job.id }}/" class="btn btn-primary mt-2">Просмотреть вакансию</a>
         </div>
     </div>
     {% endfor %}

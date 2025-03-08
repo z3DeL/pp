@@ -33,7 +33,7 @@
                     </button>
                 </div>
             </div>
-            <a href="{% url 'job_detail' job.id %}" class="btn btn-primary mt-2">Подробнее</a>
+            <a href="/api/jobs/{{ job.id }}/" class="btn btn-primary mt-2">Подробнее</a>
         </div>
     </div>
     {% endfor %}
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     favoriteBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const jobId = this.dataset.jobId;
-            fetch(`/jobs/${jobId}/favorite/`, {
+            fetch(`/api/jobs/${jobId}/favorite/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),

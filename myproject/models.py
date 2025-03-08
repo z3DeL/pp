@@ -46,21 +46,36 @@ class Job(models.Model):
         return self.title
 
 class Application(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
-    status = models.CharField(max_length=20, choices=[
+    STATUS_CHOICES = [
         ('pending', 'На рассмотрении'),
         ('accepted', 'Принята'),
         ('rejected', 'Отклонена'),
-        ('interview', 'Собеседование')
-    ])
+        ('withdrawn', 'Отозвана'),
+    ]
+    
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
+    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     cover_letter = models.TextField()
     resume = models.FileField(upload_to='resumes/')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
+    class Meta:
+        unique_together = ['job', 'applicant']
+    
     def __str__(self):
         return f"{self.applicant.username} - {self.job.title}"
+    
+    @property
+    def status_color(self):
+        colors = {
+            'pending': 'warning',
+            'accepted': 'success',
+            'rejected': 'danger',
+            'withdrawn': 'secondary',
+        }
+        return colors.get(self.status, 'primary')
 
 class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)
