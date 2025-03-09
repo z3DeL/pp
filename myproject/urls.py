@@ -36,6 +36,11 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+handler404 = 'myproject.views.handler404'
+handler500 = 'myproject.views.handler500'
+handler403 = 'myproject.views.handler403'
+handler400 = 'myproject.views.handler400'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     

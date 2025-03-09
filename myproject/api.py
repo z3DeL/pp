@@ -3,13 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db import models
+from django.db import models, IntegrityError
 from .models import User, Department, Application, Skill, UserSkill, Message, Review, Notification
 from .serializers import (
     UserSerializer, DepartmentSerializer, ApplicationSerializer,
     SkillSerializer, UserSkillSerializer, MessageSerializer,
     ReviewSerializer, NotificationSerializer
 )
+from .exceptions import PermissionError, ConflictError, ApplicationAlreadyExistsError
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -47,6 +48,26 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if self.request.user.role == 'employer':
             return Application.objects.filter(job__employer=self.request.user)
         return Application.objects.filter(applicant=self.request.user)
+
+    def perform_create(self, serializer):
+        try:
+            # Проверяем, есть ли уже заявка от этого пользователя на эту вакансию
+            existing_application = Application.objects.filter(
+                job=serializer.validated_data['job'],
+                applicant=self.request.user
+            ).exists()
+            
+            if existing_application:
+                raise ApplicationAlreadyExistsError()
+            
+            # Проверяем, является ли пользователь работодателем для этой вакансии
+            if self.request.user == serializer.validated_data['job'].employer:
+                raise PermissionError('Работодатель не может подавать заявку на свою вакансию')
+            
+            serializer.save(applicant=self.request.user)
+            
+        except IntegrityError:
+            raise ApplicationAlreadyExistsError()
 
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skill.objects.all()
