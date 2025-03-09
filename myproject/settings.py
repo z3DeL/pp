@@ -1,13 +1,15 @@
 import os
 from pathlib import Path
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
+from django.db import IntegrityError
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-your-secret-key-here'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -109,6 +111,11 @@ SWAGGER_SETTINGS = {
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'myproject.utils.error_handler.custom_exception_handler',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
@@ -118,4 +125,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
-} 
+    'UNAUTHENTICATED_USER': None,
+    'NON_FIELD_ERRORS_KEY': 'error',
+    'AUTHENTICATION_FAILED_HANDLER': 'myproject.utils.error_handler.custom_authentication_failed_handler',
+}
+
+# Показывать кастомные страницы ошибок даже в режиме отладки
+DEBUG_PROPAGATE_EXCEPTIONS = True
