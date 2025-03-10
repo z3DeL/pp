@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Department, Application, Skill, UserSkill, Message, Review, Notification
+from .models import User, Department, Application, Skill, UserSkill, Message, Review, Notification, Job
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,4 +53,13 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
-        read_only_fields = ('created_at',) 
+        read_only_fields = ('created_at',)
+
+class JobSerializer(serializers.ModelSerializer):
+    employer = UserSerializer(read_only=True)
+    department = DepartmentSerializer(read_only=True)
+    
+    class Meta:
+        model = Job
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at', 'employer') 

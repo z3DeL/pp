@@ -114,11 +114,7 @@ def custom_exception_handler(exc, context):
                 'code': 'validation_error',
                 'message': 'Ошибка валидации данных',
                 'details': details,
-                'suggestions': [
-                    'Проверьте правильность введенных данных',
-                    'Убедитесь, что все обязательные поля заполнены',
-                    'Проверьте формат данных'
-                ]
+                'suggestions': get_error_suggestions(exc)
             }
         }, status=status.HTTP_400_BAD_REQUEST)
     
@@ -153,14 +149,78 @@ def custom_exception_handler(exc, context):
 
 def get_error_suggestions(exc):
     """
-    Возвращает список предложений в зависимости от типа ошибки
+    Генерирует список рекомендаций по исправлению ошибок
     """
+    suggestions = []
+    
     if isinstance(exc, (ValidationError, DRFValidationError)):
-        return [
+        if hasattr(exc, 'detail'):
+            details = exc.detail
+            if isinstance(details, dict):
+                for field, errors in details.items():
+                    for error in errors:
+                        if error.code == 'required':
+                            suggestions.append(f'Поле "{field}" является обязательным.')
+                        elif error.code == 'blank':
+                            suggestions.append(f'Поле "{field}" не может быть пустым.')
+                        elif error.code == 'invalid':
+                            suggestions.append(f'Поле "{field}" содержит некорректные данные.')
+                        elif error.code == 'incorrect_type':
+                            suggestions.append(f'Поле "{field}" имеет неверный тип данных. Проверьте формат.')
+                        elif error.code == 'max_length':
+                            suggestions.append(f'Поле "{field}" превышает максимальную длину.')
+                        elif error.code == 'min_length':
+                            suggestions.append(f'Поле "{field}" меньше минимальной длины.')
+                        elif error.code == 'unique':
+                            suggestions.append(f'Значение поля "{field}" уже существует.')
+    
+    if not suggestions:
+        suggestions = [
             'Проверьте правильность введенных данных',
             'Убедитесь, что все обязательные поля заполнены',
             'Проверьте формат данных'
         ]
+    
+    return suggestions
+
+def get_error_suggestions(exc):
+    """
+    Возвращает список предложений в зависимости от типа ошибки
+    """
+    if isinstance(exc, (ValidationError, DRFValidationError)):
+        suggestions = []
+        if hasattr(exc, 'detail'):
+            if isinstance(exc.detail, dict):
+                for field, errors in exc.detail.items():
+                    if isinstance(errors, list):
+                        for error in errors:
+                            if error.code == 'required':
+                                suggestions.append(f'Поле "{field}" является обязательным. Пожалуйста, заполните его.')
+                            elif error.code == 'blank':
+                                suggestions.append(f'Поле "{field}" не может быть пустым.')
+                            elif error.code == 'invalid':
+                                suggestions.append(f'Некорректное значение в поле "{field}". Проверьте формат данных.')
+                            elif error.code == 'incorrect_type':
+                                suggestions.append(f'Поле "{field}" имеет неверный тип данных. Проверьте формат.')
+                            elif error.code == 'max_length':
+                                suggestions.append(f'Значение в поле "{field}" слишком длинное. Уменьшите количество символов.')
+                            elif error.code == 'min_length':
+                                suggestions.append(f'Значение в поле "{field}" слишком короткое. Увеличьте количество символов.')
+                            elif error.code == 'unique':
+                                suggestions.append(f'Значение в поле "{field}" уже существует. Выберите другое значение.')
+                            else:
+                                suggestions.append(f'Ошибка в поле "{field}": {error}')
+                    else:
+                        suggestions.append(f'Ошибка в поле "{field}": {errors}')
+            else:
+                suggestions.append(str(exc.detail))
+        else:
+            suggestions.extend([
+                'Проверьте правильность введенных данных',
+                'Убедитесь, что все обязательные поля заполнены',
+                'Проверьте формат данных'
+            ])
+        return suggestions
     elif isinstance(exc, (AuthenticationFailed, NotAuthenticated)):
         return [
             'Проверьте правильность логина и пароля',

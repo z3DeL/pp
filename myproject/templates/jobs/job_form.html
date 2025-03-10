@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if job %}Редактирование вакансии{% else %}Создание вакансии{% endif %} - Портала вакансий
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title">
+                        {% if job %}Редактирование вакансии{% else %}Создание вакансии{% endif %}
+                    </h1>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="title">Название вакансии</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ job.title|default:'' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="department">Отдел</label>
+                            <select class="form-control" id="department" name="department" required>
+                                <option value="">Выберите отдел</option>
+                                {% for department in departments %}
+                                    <option value="{{ department.id }}" {% if job.department_id == department.id %}selected{% endif %}>
+                                        {{ department.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="job_type">Тип вакансии</label>
+                            <select class="form-control" id="job_type" name="job_type" required>
+                                <option value="">Выберите тип</option>
+                                {% for value, label in job_types %}
+                                    <option value="{{ value }}" {% if job.job_type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="salary">Зарплата</label>
+                            <input type="number" class="form-control" id="salary" name="salary" value="{{ job.salary|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Описание вакансии</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{ job.description|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="requirements">Требования</label>
+                            <textarea class="form-control" id="requirements" name="requirements" rows="4">{{ job.requirements|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="responsibilities">Обязанности</label>
+                            <textarea class="form-control" id="responsibilities" name="responsibilities" rows="4">{{ job.responsibilities|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="deadline">Срок подачи</label>
+                            <input type="date" class="form-control" id="deadline" name="deadline" value="{{ job.deadline|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="skills">Требуемые навыки</label>
+                            <select class="form-control" id="skills" name="skills" multiple>
+                                {% for skill in skills %}
+                                    <option value="{{ skill.id }}" {% if skill in job.skills.all %}selected{% endif %}>
+                                        {{ skill.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" {% if job.is_active|default:True %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">Активная вакансия</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                {% if job %}Сохранить изменения{% else %}Создать вакансию{% endif %}
+                            </button>
+                            <a href="{% if job %}{% url 'job_detail' job.id %}{% else %}{% url 'job_list' %}{% endif %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

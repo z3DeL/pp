@@ -71,7 +71,7 @@
                             <small>{{ job.created_at|date:"d.m.Y" }}</small>
                         </div>
                         <p class="mb-1">{{ job.department.name }}</p>
-                        <small>{{ job.job_type }}</small>
+                        <small>{{ job.get_job_type_display }}</small>
                     </a>
                 {% empty %}
                     <p>Пока нет доступных вакансий.</p>

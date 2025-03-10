@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Job, Department, Skill, Application, UserSkill, JobSkill, User, Message, Review, Notification
+from .models import Job, Department, Skill, Application, UserSkill, JobSkill, User, Message, Review, Notification, Favorite
 from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
@@ -21,7 +21,7 @@ from .serializers import (
     ApplicationSerializer, UserSerializer,
     SkillSerializer, UserSkillSerializer,
     MessageSerializer, ReviewSerializer, NotificationSerializer,
-    DepartmentSerializer
+    DepartmentSerializer, JobSerializer
 )
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -42,6 +42,13 @@ from .utils.validators import (
     validate_user_parameters,
     validate_department_parameters
 )
+from django.urls import reverse
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.views.generic import TemplateView
+from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
+import json
+from django.http import HttpResponseServerError
 
 # API Views
 @swagger_auto_schema(
@@ -54,6 +61,7 @@ from .utils.validators import (
     ]
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def job_list(request):
     queryset = Job.objects.filter(is_active=True)
     
@@ -84,10 +92,32 @@ def job_list(request):
         })
     
     departments = Department.objects.all()
-    return render(request, 'jobs/list.html', {
+    return render(request, 'jobs/job_list.html', {
         'jobs': queryset,
         'departments': departments
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def job_detail(request, job_id):
+    try:
+        job = Job.objects.get(id=job_id)
+        if request.accepted_renderer.format == 'json':
+            return Response({
+                'id': job.id,
+                'title': job.title,
+                'description': job.description,
+                'department': job.department.name,
+                'job_type': job.get_job_type_display(),
+                'salary': job.salary,
+                'deadline': job.deadline,
+                'created_at': job.created_at
+            })
+        return render(request, 'jobs/job_detail.html', {'job': job})
+    except Job.DoesNotExist:
+        if request.accepted_renderer.format == 'json':
+            raise NotFoundError(detail='Вакансия не найдена')
+        raise Http404('Вакансия не найдена')
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -163,42 +193,104 @@ def home(request):
     jobs = Job.objects.filter(is_active=True).order_by('-created_at')[:5]
     return render(request, 'home.html', {'jobs': jobs})
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def job_detail(request, job_id):
-    try:
-        job = Job.objects.get(id=job_id)
-        if request.accepted_renderer.format == 'json':
-            return Response({
-                'id': job.id,
-                'title': job.title,
-                'description': job.description,
-                'department': job.department.name,
-                'job_type': job.get_job_type_display(),
-                'salary': job.salary,
-                'deadline': job.deadline,
-                'created_at': job.created_at
-            })
-        return render(request, 'jobs/detail.html', {'job': job})
-    except Job.DoesNotExist:
-        if request.accepted_renderer.format == 'json':
-            raise NotFoundError(detail='Вакансия не найдена')
-        raise Http404('Вакансия не найдена')
+@login_required
+def job_list(request):
+    """Список всех вакансий"""
+    jobs = Job.objects.all().order_by('-created_at')
+    return render(request, 'jobs/job_list.html', {'jobs': jobs})
+
+@login_required
+def job_create(request):
+    """Создание новой вакансии"""
+    if request.user.role != 'employer':
+        raise PermissionDenied("Только работодатели могут создавать вакансии")
+    
+    if request.method == 'POST':
+        serializer = JobSerializer(data=request.POST)
+        if serializer.is_valid():
+            job = serializer.save(employer=request.user)
+            messages.success(request, 'Вакансия успешно создана')
+            return redirect('job_detail', job_id=job.id)
+        else:
+            messages.error(request, 'Ошибка при создании вакансии')
+    else:
+        serializer = JobSerializer()
+    
+    departments = Department.objects.all()
+    skills = Skill.objects.all()
+    job_types = Job.JOB_TYPE_CHOICES
+    
+    return render(request, 'jobs/job_form.html', {
+        'serializer': serializer,
+        'departments': departments,
+        'skills': skills,
+        'job_types': job_types
+    })
+
+@login_required
+def job_edit(request, job_id):
+    """Редактирование вакансии"""
+    job = get_object_or_404(Job, id=job_id)
+    if request.user != job.employer:
+        raise PermissionDenied("Вы не можете редактировать чужую вакансию")
+    
+    if request.method == 'POST':
+        serializer = JobSerializer(job, data=request.POST)
+        if serializer.is_valid():
+            serializer.save()
+            messages.success(request, 'Вакансия успешно обновлена')
+            return redirect('job_detail', job_id=job.id)
+        else:
+            messages.error(request, 'Ошибка при обновлении вакансии')
+    else:
+        serializer = JobSerializer(job)
+    
+    departments = Department.objects.all()
+    skills = Skill.objects.all()
+    job_types = Job.JOB_TYPE_CHOICES
+    
+    return render(request, 'jobs/job_form.html', {
+        'job': job,
+        'serializer': serializer,
+        'departments': departments,
+        'skills': skills,
+        'job_types': job_types
+    })
+
+@login_required
+def job_delete(request, job_id):
+    """Удаление вакансии"""
+    job = get_object_or_404(Job, id=job_id)
+    if request.user != job.employer:
+        raise PermissionDenied("Вы не можете удалить чужую вакансию")
+    
+    if request.method == 'POST':
+        job.delete()
+        messages.success(request, 'Вакансия успешно удалена')
+        return redirect('job_list')
+    
+    return render(request, 'jobs/job_confirm_delete.html', {'job': job})
 
 @login_required
 def toggle_favorite(request, job_id):
     job = get_object_or_404(Job, id=job_id)
-    if request.user in job.favorites.all():
-        job.favorites.remove(request.user)
+    favorite, created = Favorite.objects.get_or_create(user=request.user, job=job)
+    
+    if not created:
+        favorite.delete()
         messages.success(request, 'Вакансия удалена из избранного')
     else:
-        job.favorites.add(request.user)
         messages.success(request, 'Вакансия добавлена в избранное')
+    
     return redirect('job_detail', job_id=job_id)
 
-@login_required
+@requires_csrf_token
 def favorites(request):
-    jobs = Job.objects.filter(favorites=request.user)
+    if not request.user.is_authenticated:
+        return redirect('login')
+        
+    favorites = Favorite.objects.filter(user=request.user).select_related('job')
+    jobs = [favorite.job for favorite in favorites]
     return render(request, 'jobs/favorites.html', {'jobs': jobs})
 
 @login_required
@@ -210,25 +302,40 @@ def applications(request):
     return render(request, 'applications/list.html', {'applications': applications})
 
 @login_required
-def apply_job(request, job_id):
+def job_apply(request, job_id):
+    """Подача заявки на вакансию"""
     job = get_object_or_404(Job, id=job_id)
     
-    if job.deadline < timezone.now():
-        messages.error(request, 'Срок подачи заявки истек')
+    if request.user.role != 'student':
+        messages.error(request, 'Только студенты могут подавать заявки на вакансии')
+        return redirect('job_detail', job_id=job_id)
+    
+    if job.employer == request.user:
+        messages.error(request, 'Вы не можете подать заявку на свою вакансию')
         return redirect('job_detail', job_id=job_id)
     
     if Application.objects.filter(job=job, applicant=request.user).exists():
         messages.error(request, 'Вы уже подали заявку на эту вакансию')
         return redirect('job_detail', job_id=job_id)
     
-    Application.objects.create(
-        job=job,
-        applicant=request.user,
-        status='pending'
-    )
+    if request.method == 'POST':
+        form = ApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+            application.applicant = request.user
+            application.save()
+            messages.success(request, 'Заявка успешно отправлена')
+            return redirect('applications')
+        else:
+            messages.error(request, 'Ошибка при отправке заявки')
+    else:
+        form = ApplicationForm()
     
-    messages.success(request, 'Заявка успешно отправлена')
-    return redirect('applications')
+    return render(request, 'applications/application_form.html', {
+        'form': form,
+        'job': job
+    })
 
 @login_required
 def cancel_application(request, application_id):
@@ -451,58 +558,169 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({'status': 'notification marked as read'})
 
 def handler404(request, exception):
-    """Обработчик ошибки 404 - страница не найдена"""
-    error = {
-        'code': '404',
-        'message': 'Страница не найдена',
-        'details': 'Запрашиваемая страница не существует или была перемещена.',
-        'suggestions': [
-            'Проверьте правильность введенного адреса',
-            'Убедитесь, что в адресе нет опечаток',
-            'Воспользуйтесь поиском или меню сайта',
-            'Вернитесь на главную страницу'
-        ]
-    }
-    return render(request, 'errors/error.html', {'error': error}, status=404)
+    """Обработчик 404 ошибки"""
+    return render(request, 'errors/404.html', status=404)
 
 def handler500(request):
-    """Обработчик ошибки 500 - внутренняя ошибка сервера"""
-    error = {
-        'code': '500',
-        'message': 'Внутренняя ошибка сервера',
-        'details': 'На сервере произошла непредвиденная ошибка.',
-        'suggestions': [
-            'Попробуйте обновить страницу',
-            'Попробуйте повторить действие позже',
-            'Если проблема повторяется, обратитесь в службу поддержки'
-        ]
-    }
-    return render(request, 'errors/error.html', {'error': error}, status=500)
+    """Глобальный обработчик 500 ошибки"""
+    print("Handler500 called!")
+    try:
+        return render(request, 'errors/500.html', status=500)
+    except Exception as e:
+        print(f"Error in handler500: {str(e)}")
+        return HttpResponseServerError("""
+            <html>
+                <head>
+                    <title>500 - Внутренняя ошибка сервера</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            text-align: center; 
+                            padding: 50px;
+                            background-color: #f8f9fa;
+                        }
+                        h1 { 
+                            color: #dc3545;
+                            font-size: 3rem;
+                            margin-bottom: 1rem;
+                        }
+                        p { 
+                            color: #6c757d;
+                            font-size: 1.2rem;
+                            margin-bottom: 2rem;
+                        }
+                        .btn {
+                            display: inline-block;
+                            padding: 10px 20px;
+                            background-color: #007bff;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>500 - Внутренняя ошибка сервера</h1>
+                    <p>Произошла ошибка при обработке вашего запроса.</p>
+                    <p>Пожалуйста, попробуйте позже или обратитесь к администратору.</p>
+                    <a href="/" class="btn">Вернуться на главную</a>
+                </body>
+            </html>
+        """)
 
 def handler403(request, exception):
-    """Обработчик ошибки 403 - доступ запрещен"""
-    error = {
-        'code': '403',
-        'message': 'Доступ запрещен',
-        'details': 'У вас нет прав для доступа к этой странице.',
-        'suggestions': [
-            'Убедитесь, что вы вошли в систему',
-            'Проверьте, есть ли у вас необходимые права',
-            'Обратитесь к администратору для получения доступа'
-        ]
-    }
-    return render(request, 'errors/error.html', {'error': error}, status=403)
+    """Обработчик 403 ошибки"""
+    return render(request, 'errors/403.html', status=403)
 
 def handler400(request, exception):
-    """Обработчик ошибки 400 - некорректный запрос"""
-    error = {
-        'code': '400',
-        'message': 'Некорректный запрос',
-        'details': 'Сервер не может обработать ваш запрос из-за некорректных данных.',
-        'suggestions': [
-            'Проверьте правильность введенных данных',
-            'Убедитесь, что все обязательные поля заполнены',
-            'Проверьте формат данных'
-        ]
-    }
-    return render(request, 'errors/error.html', {'error': error}, status=400) 
+    """Обработчик 400 ошибки"""
+    return render(request, 'errors/400.html', status=400)
+
+def test_401_error(request):
+    """Тестовое представление для проверки 401 ошибки"""
+    raise NotAuthenticated("Требуется аутентификация")
+
+def test_403_error(request):
+    """Тестовое представление для проверки 403 ошибки"""
+    raise PermissionDenied("У вас нет прав для доступа к этой странице")
+
+def test_500_error(request):
+    """Тестовое представление для проверки 500 ошибки"""
+    # Намеренно создаем ошибку
+    nonexistent_variable = undefined_variable
+    return render(request, 'jobs/test_500.html')
+
+@login_required
+def add_review(request, job_id):
+    """Добавление отзыва о вакансии"""
+    job = get_object_or_404(Job, id=job_id)
+    
+    if request.method == 'POST':
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment')
+        is_anonymous = request.POST.get('is_anonymous') == 'on'
+        
+        if not rating or not comment:
+            messages.error(request, 'Пожалуйста, заполните все поля')
+            return redirect('add_review', job_id=job_id)
+        
+        # Проверяем, не оставлял ли пользователь уже отзыв
+        if Review.objects.filter(job=job, reviewer=request.user).exists():
+            messages.error(request, 'Вы уже оставили отзыв о этой вакансии')
+            return redirect('job_detail', job_id=job_id)
+        
+        Review.objects.create(
+            job=job,
+            reviewer=request.user,
+            rating=rating,
+            comment=comment,
+            is_anonymous=is_anonymous
+        )
+        
+        messages.success(request, 'Отзыв успешно добавлен')
+        return redirect('job_detail', job_id=job_id)
+    
+    return render(request, 'jobs/review_form.html', {'job': job})
+
+@login_required
+def user_skills(request):
+    """Страница управления навыками пользователя"""
+    user_skills = UserSkill.objects.filter(user=request.user).select_related('skill')
+    available_skills = Skill.objects.exclude(
+        id__in=user_skills.values_list('skill_id', flat=True)
+    )
+    
+    return render(request, 'users/skills.html', {
+        'user_skills': user_skills,
+        'available_skills': available_skills
+    })
+
+@login_required
+def add_skill(request):
+    """Добавление навыка пользователю"""
+    if request.method == 'POST':
+        skill_id = request.POST.get('skill')
+        level = request.POST.get('level')
+        
+        if not skill_id or not level:
+            messages.error(request, 'Пожалуйста, заполните все поля')
+            return redirect('user_skills')
+        
+        try:
+            skill = Skill.objects.get(id=skill_id)
+            UserSkill.objects.create(
+                user=request.user,
+                skill=skill,
+                level=level
+            )
+            messages.success(request, 'Навык успешно добавлен')
+        except Skill.DoesNotExist:
+            messages.error(request, 'Выбранный навык не существует')
+        except IntegrityError:
+            messages.error(request, 'У вас уже есть этот навык')
+    
+    return redirect('user_skills')
+
+@login_required
+def edit_skill(request, user_skill_id):
+    """Редактирование навыка пользователя"""
+    user_skill = get_object_or_404(UserSkill, id=user_skill_id, user=request.user)
+    
+    if request.method == 'POST':
+        level = request.POST.get('level')
+        if level:
+            user_skill.level = level
+            user_skill.save()
+            messages.success(request, 'Навык успешно обновлен')
+        else:
+            messages.error(request, 'Пожалуйста, выберите уровень навыка')
+    
+    return redirect('user_skills')
+
+@login_required
+def delete_skill(request, user_skill_id):
+    """Удаление навыка пользователя"""
+    user_skill = get_object_or_404(UserSkill, id=user_skill_id, user=request.user)
+    user_skill.delete()
+    messages.success(request, 'Навык успешно удален')
+    return redirect('user_skills') 

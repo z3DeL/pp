@@ -10,7 +10,7 @@ from . import views
 from .api import (
     UserViewSet, DepartmentViewSet, ApplicationViewSet,
     SkillViewSet, UserSkillViewSet, MessageViewSet, ReviewViewSet,
-    NotificationViewSet
+    NotificationViewSet, JobViewSet
 )
 
 router = DefaultRouter()
@@ -22,6 +22,7 @@ router.register(r'user-skills', UserSkillViewSet, basename='user-skill')
 router.register(r'messages', MessageViewSet, basename='message')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'jobs', JobViewSet)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -36,8 +37,8 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-handler404 = 'myproject.views.handler404'
 handler500 = 'myproject.views.handler500'
+handler404 = 'myproject.views.handler404'
 handler403 = 'myproject.views.handler403'
 handler400 = 'myproject.views.handler400'
 
@@ -58,12 +59,22 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('jobs/', views.job_list, name='job_list'),
     path('jobs/<int:job_id>/', views.job_detail, name='job_detail'),
-    path('jobs/<int:job_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
-    path('jobs/<int:job_id>/apply/', views.apply_job, name='apply_job'),
+    path('jobs/create/', views.job_create, name='job_create'),
+    path('jobs/<int:job_id>/edit/', views.job_edit, name='job_edit'),
+    path('jobs/<int:job_id>/delete/', views.job_delete, name='job_delete'),
+    path('jobs/<int:job_id>/apply/', views.job_apply, name='job_apply'),
     path('favorites/', views.favorites, name='favorites'),
     path('applications/', views.applications, name='applications'),
     path('applications/<int:application_id>/cancel/', views.cancel_application, name='cancel_application'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register, name='register'),
+    path('test/401/', views.test_401_error, name='test_401'),
+    path('test/403/', views.test_403_error, name='test_403'),
+    path('test/500/', views.test_500_error, name='test_500'),
+    path('jobs/<int:job_id>/review/', views.add_review, name='add_review'),
+    path('skills/', views.user_skills, name='user_skills'),
+    path('skills/add/', views.add_skill, name='add_skill'),
+    path('skills/<int:user_skill_id>/edit/', views.edit_skill, name='edit_skill'),
+    path('skills/<int:user_skill_id>/delete/', views.delete_skill, name='delete_skill'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

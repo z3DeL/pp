@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Вакансии - Портала вакансий{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Вакансии</h1>
+        {% if user.role == 'employer' %}
+            <a href="{% url 'job_create' %}" class="btn btn-primary">Создать вакансию</a>
+        {% endif %}
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <form method="get" class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="job_type">Тип вакансии</label>
+                                <select name="job_type" id="job_type" class="form-control">
+                                    <option value="">Все типы</option>
+                                    {% for value, label in job_types %}
+                                        <option value="{{ value }}" {% if request.GET.job_type == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="department">Отдел</label>
+                                <select name="department" id="department" class="form-control">
+                                    <option value="">Все отделы</option>
+                                    {% for department in departments %}
+                                        <option value="{{ department.id }}" {% if request.GET.department == department.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ department.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">Фильтровать</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for job in jobs %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ job.title }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ job.department.name }}</h6>
+                        <p class="card-text">{{ job.description|truncatewords:30 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-primary">{{ job.get_job_type_display }}</span>
+                                {% if job.salary %}
+                                    <span class="badge badge-success">{{ job.salary }} ₽</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary">Подробнее</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-md-12">
+                <div class="alert alert-info">
+                    Вакансии не найдены.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

@@ -106,9 +106,29 @@ class ErrorHandlerTest(TestCase):
         # Проверяем рекомендации
         self.assertIn('suggestions', response.json()['error'])
         suggestions = response.json()['error']['suggestions']
-        self.assertIn('Проверьте правильность введенных данных', suggestions)
-        self.assertIn('Убедитесь, что все обязательные поля заполнены', suggestions)
-        self.assertIn('Проверьте формат данных', suggestions)
+        self.assertIn('Поле "job" имеет неверный тип данных. Проверьте формат.', suggestions)
+        self.assertIn('Поле "resume" является обязательным. Пожалуйста, заполните его.', suggestions)
+        self.assertIn('Поле "cover_letter" является обязательным. Пожалуйста, заполните его.', suggestions)
+
+    def test_validation_error_blank(self):
+        """Тест ошибки валидации - пустое поле"""
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(
+            reverse('api_applications'),
+            {
+                'job': self.job.id,
+                'cover_letter': '',
+                'resume': self.test_resume
+            },
+            HTTP_ACCEPT='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error']['code'], 'validation_error')
+        # Проверяем рекомендации
+        self.assertIn('suggestions', response.json()['error'])
+        suggestions = response.json()['error']['suggestions']
+        self.assertIn('Поле "cover_letter" не может быть пустым.', suggestions)
 
     def test_conflict_error(self):
         """Тест ошибки 409 - конфликт"""

@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db import models, IntegrityError
-from .models import User, Department, Application, Skill, UserSkill, Message, Review, Notification
+from .models import User, Department, Application, Skill, UserSkill, Message, Review, Notification, Job
 from .serializers import (
     UserSerializer, DepartmentSerializer, ApplicationSerializer,
     SkillSerializer, UserSkillSerializer, MessageSerializer,
-    ReviewSerializer, NotificationSerializer
+    ReviewSerializer, NotificationSerializer, JobSerializer
 )
-from .exceptions import PermissionError, ConflictError, ApplicationAlreadyExistsError
+from .exceptions import PermissionError, ConflictError, ApplicationAlreadyExistsError, JobNotFoundError
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -139,4 +139,39 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification = self.get_object()
         notification.is_read = True
         notification.save()
-        return Response({'status': 'notification marked as read'}) 
+        return Response({'status': 'notification marked as read'})
+
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Job.objects.none()
+        return Job.objects.all()
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'employer':
+            raise PermissionError('Только работодатели могут создавать вакансии')
+        serializer.save(employer=self.request.user)
+
+    def perform_update(self, serializer):
+        if self.request.user != self.get_object().employer:
+            raise PermissionError('Только работодатель может редактировать свою вакансию')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user != instance.employer:
+            raise PermissionError('Только работодатель может удалять свою вакансию')
+        instance.delete()
+
+    @action(detail=True, methods=['get'])
+    def applications(self, request, pk=None):
+        job = self.get_object()
+        if request.user != job.employer:
+            raise PermissionError('Только работодатель может просматривать заявки на свою вакансию')
+        
+        applications = job.applications.all()
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data) 

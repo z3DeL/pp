@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление вакансии - Портала вакансий{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title">Удаление вакансии</h1>
+                    
+                    <p class="lead">Вы уверены, что хотите удалить вакансию "{{ job.title }}"?</p>
+                    <p class="text-danger">Это действие нельзя отменить.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                            <a href="{% url 'job_detail' job.id %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
