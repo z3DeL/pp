@@ -15,14 +15,14 @@
         <div class="col-md-12">
             <form method="get" class="card">
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="job_type">Тип вакансии</label>
-                                <select name="job_type" id="job_type" class="form-control">
+                                <label for="job_type" class="form-label">Тип вакансии</label>
+                                <select name="job_type" id="job_type" class="form-select">
                                     <option value="">Все типы</option>
                                     {% for value, label in job_types %}
-                                        <option value="{{ value }}" {% if request.GET.job_type == value %}selected{% endif %}>
+                                        <option value="{{ value }}" {% if current_job_type == value %}selected{% endif %}>
                                             {{ label }}
                                         </option>
                                     {% endfor %}
@@ -31,11 +31,11 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="department">Отдел</label>
-                                <select name="department" id="department" class="form-control">
+                                <label for="department" class="form-label">Отдел</label>
+                                <select name="department" id="department" class="form-select">
                                     <option value="">Все отделы</option>
                                     {% for department in departments %}
-                                        <option value="{{ department.id }}" {% if request.GET.department == department.id|stringformat:"s" %}selected{% endif %}>
+                                        <option value="{{ department.id }}" {% if current_department == department.id|stringformat:"s" %}selected{% endif %}>
                                             {{ department.name }}
                                         </option>
                                     {% endfor %}
@@ -43,10 +43,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button type="submit" class="btn btn-primary btn-block">Фильтровать</button>
-                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
                         </div>
                     </div>
                 </div>
@@ -64,9 +61,9 @@
                         <p class="card-text">{{ job.description|truncatewords:30 }}</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="badge badge-primary">{{ job.get_job_type_display }}</span>
+                                <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
                                 {% if job.salary %}
-                                    <span class="badge badge-success">{{ job.salary }} ₽</span>
+                                    <span class="badge bg-success">{{ job.salary }} ₽</span>
                                 {% endif %}
                             </div>
                             <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary">Подробнее</a>

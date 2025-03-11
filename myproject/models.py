@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -10,10 +12,32 @@ class User(AbstractUser):
     
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
     created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
+    bio = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.CharField(max_length=250, blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    birth_date = models.DateField(null=True, blank=True)
+    experience = models.TextField(blank=True, null=True)
+    education = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Профиль {self.user.username}"
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
 
 class Department(models.Model):
     name = models.CharField(max_length=200)
@@ -26,17 +50,18 @@ class Department(models.Model):
         return self.name
 
 class Job(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    employer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_jobs')
-    job_type = models.CharField(max_length=50, choices=[
+    JOB_TYPE_CHOICES = [
         ('internship', 'Стажировка'),
         ('part_time', 'Частичная занятость'),
         ('research', 'Исследовательская работа'),
         ('teaching', 'Преподавательская работа')
-    ])
-    requirements = models.TextField()
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    employer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_jobs')
+    job_type = models.CharField(max_length=50, choices=JOB_TYPE_CHOICES)
     salary = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField()
@@ -102,7 +127,7 @@ class Skill(models.Model):
         return self.name
 
 class JobSkill(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='required_skills')
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     is_required = models.BooleanField(default=True)
     level = models.CharField(max_length=20, choices=[

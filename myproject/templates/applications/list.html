@@ -32,12 +32,17 @@
                                     {{ application.get_status_display }}
                                 </span>
                             </div>
-                            {% if user.role == 'student' and application.status == 'pending' %}
-                                <form method="post" action="{% url 'cancel_application' application.id %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Отменить</button>
-                                </form>
-                            {% endif %}
+                            <div>
+                                <a href="{% url 'application_detail' application.id %}" class="btn btn-sm btn-primary me-2">
+                                    Подробнее
+                                </a>
+                                {% if user.role == 'student' and application.status == 'pending' %}
+                                    <form method="post" action="{% url 'cancel_application' application.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Отменить</button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 {% empty %}

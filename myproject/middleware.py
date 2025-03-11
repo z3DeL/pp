@@ -1,4 +1,4 @@
-from django.http import HttpResponseServerError, HttpResponse
+from django.http import HttpResponseServerError, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
@@ -32,52 +32,21 @@ class ErrorHandlingMiddleware:
             status_code = 500
             template = 'errors/500.html'
 
-        try:
-            # Пытаемся отрендерить шаблон ошибки
-            html = render_to_string(template, {
-                'request': request,
-                'exception': str(exception)
-            })
-            return HttpResponse(html, status=status_code)
-        except Exception as e:
-            # Если не удалось отрендерить шаблон, возвращаем базовый HTML
-            logger.error(f"Error rendering error template: {str(e)}", exc_info=True)
-            return HttpResponseServerError("""
-                <html>
-                    <head>
-                        <title>500 - Внутренняя ошибка сервера</title>
-                        <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                text-align: center; 
-                                padding: 50px;
-                                background-color: #f8f9fa;
-                            }
-                            h1 { 
-                                color: #dc3545;
-                                font-size: 3rem;
-                                margin-bottom: 1rem;
-                            }
-                            p { 
-                                color: #6c757d;
-                                font-size: 1.2rem;
-                                margin-bottom: 2rem;
-                            }
-                            .btn {
-                                display: inline-block;
-                                padding: 10px 20px;
-                                background-color: #007bff;
-                                color: white;
-                                text-decoration: none;
-                                border-radius: 5px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>500 - Внутренняя ошибка сервера</h1>
-                        <p>Произошла ошибка при обработке вашего запроса.</p>
-                        <p>Пожалуйста, попробуйте позже или обратитесь к администратору.</p>
-                        <a href="/" class="btn">Вернуться на главную</a>
-                    </body>
-                </html>
-            """) 
+        # Проверяем, является ли запрос API запросом
+        is_api_request = request.path.startswith('/api/') or 'application/json' in request.META.get('HTTP_ACCEPT', '')
+        
+        if is_api_request:
+            # Для API запросов возвращаем JSON
+            return JsonResponse({
+                'error': {
+                    'code': f'error_{status_code}',
+                    'message': str(exception),
+                    'details': str(exception)
+                }
+            }, status=status_code)
+        else:
+            # Для веб-запросов возвращаем HTML
+            return HttpResponse(
+                render_to_string(template, {'exception': exception}),
+                status=status_code
+            ) 

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">Мои навыки</h2>
@@ -23,11 +23,6 @@
                                             <h5 class="card-title">{{ user_skill.skill.name }}</h5>
                                             <p class="card-text">
                                                 <span class="badge bg-primary">{{ user_skill.get_level_display }}</span>
-                                                {% if user_skill.verified %}
-                                                    <span class="badge bg-success">Подтвержден</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning">Не подтвержден</span>
-                                                {% endif %}
                                             </p>
                                             <div class="btn-group">
                                                 <button type="button" class="btn btn-sm btn-outline-primary" 
@@ -51,18 +46,6 @@
                     {% else %}
                         <p class="text-muted">У вас пока нет добавленных навыков.</p>
                     {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">Статистика</h3>
-                </div>
-                <div class="card-body">
-                    <p>Всего навыков: {{ user_skills|length }}</p>
-                    <p>Подтвержденных: {{ user_skills|filter_verified|length }}</p>
-                    <p>Не подтвержденных: {{ user_skills|filter_unverified|length }}</p>
                 </div>
             </div>
         </div>

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои сообщения{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Мои чаты</h1>
+            
+            {% if chats %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="list-group list-group-flush">
+                                {% for chat in chats %}
+                                    {% with app=chat.application partner=chat.chat_partner last_msg=chat.last_message %}
+                                    <a href="{% url 'application_detail' app.id %}" class="list-group-item list-group-item-action {% if chat.unread_count > 0 %}bg-light{% endif %}">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <div class="d-flex align-items-center">
+                                                    {% if partner.profile.photo %}
+                                                        <img src="{{ partner.profile.photo.url }}" alt="{{ partner.username }}" 
+                                                            class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                                                            style="width: 48px; height: 48px; font-size: 1.5rem;">
+                                                            {{ partner.username|first|upper }}
+                                                        </div>
+                                                    {% endif %}
+                                                    
+                                                    <div>
+                                                        <h5 class="mb-1">
+                                                            {{ partner.get_full_name|default:partner.username }}
+                                                            {% if chat.unread_count > 0 %}
+                                                                <span class="badge bg-primary rounded-pill ms-2">{{ chat.unread_count }}</span>
+                                                            {% endif %}
+                                                        </h5>
+                                                        <p class="mb-1 text-muted">
+                                                            {% if app %}
+                                                                Заявка на: {{ app.job.title }}
+                                                            {% else %}
+                                                                Личные сообщения
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="mb-1 mt-2">
+                                                    <small class="text-truncate d-inline-block" style="max-width: 500px;">
+                                                        {% if last_msg.sender == request.user %}
+                                                            <span class="text-muted">Вы: </span>
+                                                        {% endif %}
+                                                        {{ last_msg.content|truncatechars:100 }}
+                                                    </small>
+                                                </p>
+                                            </div>
+                                            
+                                            <small class="text-muted text-nowrap">
+                                                {{ last_msg.created_at|date:"d.m.Y" }}
+                                                <br>
+                                                {{ last_msg.created_at|time:"H:i" }}
+                                            </small>
+                                        </div>
+                                    </a>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    У вас пока нет сообщений. 
+                    {% if user.role == 'student' %}
+                        Отправьте заявку на вакансию, чтобы начать общение с работодателем.
+                    {% elif user.role == 'employer' %}
+                        Ожидайте заявок от соискателей или отправьте им сообщение.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

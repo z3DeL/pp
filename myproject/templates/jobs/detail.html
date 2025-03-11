@@ -21,9 +21,6 @@
                     <h5 class="card-subtitle mb-3">Требования</h5>
                     <p class="card-text">{{ job.requirements|linebreaks }}</p>
                     
-                    <h5 class="card-subtitle mb-3">Обязанности</h5>
-                    <p class="card-text">{{ job.responsibilities|linebreaks }}</p>
-                    
                     <h5 class="card-subtitle mb-3">Требуемые навыки</h5>
                     <div class="mb-3">
                         {% for skill in job.required_skills.all %}
