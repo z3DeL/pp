@@ -78,8 +78,4 @@ urlpatterns = [
     path('profile/skills/', views.profile_skills, name='profile_skills'),
     path('profile/skills/<int:skill_id>/delete/', views.delete_profile_skill, name='delete_profile_skill'),
     path('profile/<str:username>/', views.profile_view, name='user_profile'),
-    
-    path('test/401/', views.test_401_error, name='test_401'),
-    path('test/403/', views.test_403_error, name='test_403'),
-    path('test/500/', views.test_500_error, name='test_500'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

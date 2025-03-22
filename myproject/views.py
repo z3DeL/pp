@@ -835,77 +835,20 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({'status': 'notification marked as read'})
 
 def handler404(request, exception):
-    """Обработчик 404 ошибки"""
+    """Обработчик ошибки 404"""
     return render(request, 'errors/404.html', status=404)
 
 def handler500(request):
-    """Глобальный обработчик 500 ошибки"""
-    print("Handler500 called!")
-    try:
-        return render(request, 'errors/500.html', status=500)
-    except Exception as e:
-        print(f"Error in handler500: {str(e)}")
-        return HttpResponseServerError("""
-            <html>
-                <head>
-                    <title>500 - Внутренняя ошибка сервера</title>
-                    <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            text-align: center; 
-                            padding: 50px;
-                            background-color: #f8f9fa;
-                        }
-                        h1 { 
-                            color: #dc3545;
-                            font-size: 3rem;
-                            margin-bottom: 1rem;
-                        }
-                        p { 
-                            color: #6c757d;
-                            font-size: 1.2rem;
-                            margin-bottom: 2rem;
-                        }
-                        .btn {
-                            display: inline-block;
-                            padding: 10px 20px;
-                            background-color: #007bff;
-                            color: white;
-                            text-decoration: none;
-                            border-radius: 5px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>500 - Внутренняя ошибка сервера</h1>
-                    <p>Произошла ошибка при обработке вашего запроса.</p>
-                    <p>Пожалуйста, попробуйте позже или обратитесь к администратору.</p>
-                    <a href="/" class="btn">Вернуться на главную</a>
-                </body>
-            </html>
-        """)
+    """Обработчик ошибки 500"""
+    return render(request, 'errors/500.html', status=500)
 
 def handler403(request, exception):
-    """Обработчик 403 ошибки"""
+    """Обработчик ошибки 403"""
     return render(request, 'errors/403.html', status=403)
 
 def handler400(request, exception):
-    """Обработчик 400 ошибки"""
+    """Обработчик ошибки 400"""
     return render(request, 'errors/400.html', status=400)
-
-def test_401_error(request):
-    """Тестовое представление для проверки 401 ошибки"""
-    raise NotAuthenticated("Требуется аутентификация")
-
-def test_403_error(request):
-    """Тестовое представление для проверки 403 ошибки"""
-    raise PermissionDenied("У вас нет прав для доступа к этой странице")
-
-def test_500_error(request):
-    """Тестовое представление для проверки 500 ошибки"""
-    # Намеренно создаем ошибку
-    nonexistent_variable = undefined_variable
-    return render(request, 'jobs/test_500.html')
 
 @login_required
 def add_review(request, job_id):
