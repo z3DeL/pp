@@ -1,0 +1,13 @@
+{% extends "errors/base.html" %}
+
+{% block title %}401 - Требуется аутентификация{% endblock %}
+
+{% block content %}
+<div class="error-code">401</div>
+<h1 class="error-message">Требуется аутентификация</h1>
+<p class="error-description">
+    Для доступа к этой странице необходимо войти в систему.<br>
+    Пожалуйста, авторизуйтесь для продолжения.
+</p>
+<a href="{% url 'login' %}" class="btn btn-primary btn-home">Войти в систему</a>
+{% endblock %} 

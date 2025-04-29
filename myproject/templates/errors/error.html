@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <h1>{{ error.code }} - {{ error.message }}</h1>
+        
+        <div class="error-details">
+            {{ error.details }}
+        </div>
+
+        {% if error.suggestions %}
+        <div class="error-suggestions">
+            <h3>Что можно сделать:</h3>
+            <ul>
+                {% for suggestion in error.suggestions %}
+                <li>{{ suggestion }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="error-actions">
+            <a href="{% url 'home' %}" class="btn btn-primary">Вернуться на главную</a>
+            {% if request.META.HTTP_REFERER %}
+            <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-secondary">Вернуться назад</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-container {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.error-content {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-content h1 {
+    color: #dc3545;
+    margin-bottom: 1.5rem;
+}
+
+.error-details {
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+
+.error-suggestions {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.error-suggestions h3 {
+    color: #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.error-suggestions ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.error-suggestions li {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.error-suggestions li:before {
+    content: "•";
+    color: #0d6efd;
+    position: absolute;
+    left: 0;
+}
+
+.error-actions {
+    margin-top: 2rem;
+}
+
+.error-actions .btn {
+    margin-right: 1rem;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} - Портала вакансий{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title">{{ job.title }}</h1>
+                    <div class="mb-3">
+                        <span class="badge badge-primary">{{ job.get_job_type_display }}</span>
+                        {% if job.salary %}
+                            <span class="badge badge-success">{{ job.salary }} ₽</span>
+                        {% endif %}
+                        <span class="badge badge-info">{{ job.department.name }}</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Описание вакансии</h5>
+                        <p class="card-text">{{ job.description|linebreaks }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Требования</h5>
+                        
+                        {% if job.required_skills.all %}
+                            <div class="mb-3">
+                                <h6>Навыки:</h6>
+                                <ul class="list-group">
+                                    {% for job_skill in job.required_skills.all %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>
+                                                {{ job_skill.skill.name }}
+                                                <span class="badge bg-{{ job_skill.is_required|yesno:'danger,secondary' }} ms-2">
+                                                    {{ job_skill.is_required|yesno:'Обязательно,Желательно' }}
+                                                </span>
+                                            </span>
+                                            <span class="badge bg-primary">
+                                                {{ job_skill.get_level_display }}
+                                            </span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Требования не указаны</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if job.skills.all %}
+                        <div class="mb-4">
+                            <h5>Требуемые навыки</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for skill in job.skills.all %}
+                                    <span class="badge badge-secondary">{{ skill.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="text-muted">
+                        <small>Опубликовано: {{ job.created_at|date:"d.m.Y" }}</small>
+                        {% if job.deadline %}
+                            <br>
+                            <small>Срок подачи: {{ job.deadline|date:"d.m.Y" }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Информация о вакансии</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Отдел:</strong> {{ job.department.name }}</li>
+                        <li><strong>Тип:</strong> {{ job.get_job_type_display }}</li>
+                        {% if job.salary %}
+                            <li><strong>Зарплата:</strong> {{ job.salary }} ₽</li>
+                        {% endif %}
+                        {% if job.deadline %}
+                            <li><strong>Срок подачи:</strong> {{ job.deadline|date:"d.m.Y" }}</li>
+                        {% endif %}
+                    </ul>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="mt-3">
+                            {% if user.role == 'student' %}
+                                {% if not has_applied %}
+                                    {% if job.deadline %}
+                                        {% with deadline_date=job.deadline.date %}
+                                            {% if deadline_date < today %}
+                                                <div class="alert alert-warning">
+                                                    Срок подачи заявок истек ({{ job.deadline|date:"d.m.Y" }})
+                                                </div>
+                                            {% else %}
+                                                <a href="{% url 'job_apply' job.id %}" class="btn btn-primary btn-block w-100 mb-2">
+                                                    Подать заявку
+                                                </a>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <a href="{% url 'job_apply' job.id %}" class="btn btn-primary btn-block w-100 mb-2">
+                                            Подать заявку
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        Вы уже подали заявку на эту вакансию
+                                    </div>
+                                {% endif %}
+                            {% elif user == job.employer %}
+                                <div class="btn-group w-100 mb-2">
+                                    <a href="{% url 'job_edit' job.id %}" class="btn btn-outline-primary">Редактировать</a>
+                                    <a href="{% url 'job_delete' job.id %}" class="btn btn-outline-danger">Удалить</a>
+                                </div>
+                            {% endif %}
+                            
+                            <form method="post" action="{% url 'toggle_favorite' job.id %}" class="mb-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-warning btn-block w-100">
+                                    {% if job in user.favorite_jobs.all %}
+                                        Удалить из избранного
+                                    {% else %}
+                                        Добавить в избранное
+                                    {% endif %}
+                                </button>
+                            </form>
+                            
+                            {% if not has_reviewed %}
+                                <a href="{% url 'add_review' job.id %}" class="btn btn-outline-success btn-block w-100">
+                                    Оставить отзыв
+                                </a>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    Вы уже оставили отзыв о этой вакансии
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>Для действий необходимо <a href="{% url 'login' %}">войти</a> или <a href="{% url 'register' %}">зарегистрироваться</a></p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

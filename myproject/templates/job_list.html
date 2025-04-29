@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Вакансии - Университетский портал вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Доступные вакансии</h2>
+    </div>
+</div>
+
+<!-- Форма фильтрации -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="job_type" class="form-label">Тип работы</label>
+                <select name="job_type" id="job_type" class="form-select">
+                    <option value="">Все типы</option>
+                    <option value="internship" {% if request.GET.job_type == 'internship' %}selected{% endif %}>Стажировка</option>
+                    <option value="part_time" {% if request.GET.job_type == 'part_time' %}selected{% endif %}>Частичная занятость</option>
+                    <option value="full_time" {% if request.GET.job_type == 'full_time' %}selected{% endif %}>Полная занятость</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="department" class="form-label">Департамент</label>
+                <select name="department" id="department" class="form-select">
+                    <option value="">Все департаменты</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"s" %}selected{% endif %}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="schedule" class="form-label">График</label>
+                <select name="schedule" id="schedule" class="form-select">
+                    <option value="">Все графики</option>
+                    <option value="flexible" {% if request.GET.schedule == 'flexible' %}selected{% endif %}>Гибкий</option>
+                    <option value="fixed" {% if request.GET.schedule == 'fixed' %}selected{% endif %}>Фиксированный</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="sort" class="form-label">Сортировка</label>
+                <select name="sort" id="sort" class="form-select">
+                    <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Сначала новые</option>
+                    <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Сначала старые</option>
+                    <option value="salary" {% if request.GET.sort == 'salary' %}selected{% endif %}>По зарплате (возр.)</option>
+                    <option value="-salary" {% if request.GET.sort == '-salary' %}selected{% endif %}>По зарплате (убыв.)</option>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <label class="form-label">Навыки</label>
+                <div class="row">
+                    {% for skill in skills %}
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="skills" value="{{ skill.id }}" 
+                                   id="skill{{ skill.id }}" {% if skill.id|stringformat:"s" in request.GET.skills %}checked{% endif %}>
+                            <label class="form-check-label" for="skill{{ skill.id }}">
+                                {{ skill.name }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                <a href="/api/jobs/" class="btn btn-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список вакансий -->
+<div class="row">
+    {% for job in jobs %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="/api/jobs/{{ job.id }}/" class="text-decoration-none">{{ job.title }}</a>
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ job.department.name }}</h6>
+                <p class="card-text">{{ job.description|truncatewords:30 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
+                        <span class="badge bg-success">{{ job.salary }} ₽</span>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-outline-primary btn-sm favorite-btn" data-job-id="{{ job.id }}">
+                            {% if user in job.favorites.all %}
+                                <i class="bi bi-heart-fill"></i>
+                            {% else %}
+                                <i class="bi bi-heart"></i>
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col">
+        <p>На данный момент нет доступных вакансий.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtns = document.querySelectorAll('.favorite-btn');
+    favoriteBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch(`/api/jobs/${jobId}/favorite/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_favorite) {
+                    this.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                } else {
+                    this.innerHTML = '<i class="bi bi-heart"></i>';
+                }
+            });
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

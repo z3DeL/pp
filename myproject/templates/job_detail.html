@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} - Университетский портал вакансий{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>{{ job.title }}</h2>
+        {% if user.is_authenticated %}
+            <button class="btn btn-outline-primary favorite-btn" data-job-id="{{ job.id }}">
+                {% if user in job.favorites.all %}
+                    <i class="bi bi-heart-fill"></i> В избранном
+                {% else %}
+                    <i class="bi bi-heart"></i> В избранное
+                {% endif %}
+            </button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5>Описание</h5>
+                <p>{{ job.description }}</p>
+
+                <h5>Требования</h5>
+                <p>{{ job.requirements }}</p>
+
+                <h5>Тип работы</h5>
+                <p>{{ job.get_job_type_display }}</p>
+
+                <h5>Зарплата</h5>
+                <p>{{ job.salary }} ₽</p>
+
+                <h5>Срок подачи</h5>
+                <p>{{ job.deadline|date:"d.m.Y" }}</p>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Департамент</h5>
+                        <p>{{ job.department.name }}</p>
+                        <p>{{ job.department.location }}</p>
+                        <p>{{ job.department.contact_email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h5>Обязательные навыки</h5>
+                <ul class="list-group">
+                    {% for skill in required_skills %}
+                        <li class="list-group-item">
+                            {{ skill.skill.name }} ({{ skill.get_level_display }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5>Желательные навыки</h5>
+                <ul class="list-group">
+                    {% for skill in optional_skills %}
+                        <li class="list-group-item">
+                            {{ skill.skill.name }} ({{ skill.get_level_display }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% if user.is_authenticated and user.role == 'student' %}
+            <div class="mt-4">
+                <button class="btn btn-primary apply-btn" data-job-id="{{ job.id }}">Подать заявку</button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtn = document.querySelector('.favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch(`/api/jobs/${jobId}/favorite/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_favorite) {
+                    this.innerHTML = '<i class="bi bi-heart-fill"></i> В избранном';
+                } else {
+                    this.innerHTML = '<i class="bi bi-heart"></i> В избранное';
+                }
+            });
+        });
+    }
+
+    const applyBtn = document.querySelector('.apply-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch(`/api/jobs/${jobId}/apply/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    alert('Заявка успешно отправлена!');
+                } else {
+                    alert(data.error || 'Произошла ошибка при отправке заявки.');
+                }
+            });
+        });
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Подача заявки на вакансию {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Подача заявки на вакансию</h3>
+                    <h5 class="text-muted">{{ job.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label">Сопроводительное письмо</label>
+                            {{ form.cover_letter }}
+                            {% if form.cover_letter.errors %}
+                                <div class="text-danger">
+                                    {{ form.cover_letter.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Опишите, почему вы хотите получить эту работу и почему вы подходите для неё.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.resume.id_for_label }}" class="form-label">Резюме (PDF, DOC)</label>
+                            {{ form.resume }}
+                            {% if form.resume.errors %}
+                                <div class="text-danger">
+                                    {{ form.resume.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Загрузите ваше резюме в формате PDF или DOC.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-secondary">Отмена</a>
+                            <button type="submit" class="btn btn-primary">Отправить заявку</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

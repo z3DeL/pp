@@ -1,0 +1,22 @@
+{% extends 'errors/base.html' %}
+
+{% block title %}400 - Некорректный запрос{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h1 class="display-1 text-danger">400</h1>
+                    <h2 class="mb-4">Некорректный запрос</h2>
+                    <p class="lead">Сервер не может обработать ваш запрос из-за некорректных данных.</p>
+                    <div class="mt-4">
+                        <a href="{% url 'home' %}" class="btn btn-primary">Вернуться на главную</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Мои навыки{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Мои навыки</h2>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+                        Добавить навык
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if user_skills %}
+                        <div class="row">
+                            {% for user_skill in user_skills %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ user_skill.skill.name }}</h5>
+                                            <p class="card-text">
+                                                <span class="badge bg-primary">{{ user_skill.get_level_display }}</span>
+                                            </p>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editSkillModal{{ user_skill.id }}">
+                                                    Редактировать
+                                                </button>
+                                                <form method="post" action="{% url 'delete_skill' user_skill.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="return confirm('Вы уверены, что хотите удалить этот навык?')">
+                                                        Удалить
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">У вас пока нет добавленных навыков.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления навыка -->
+<div class="modal fade" id="addSkillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить навык</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'add_skill' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="skill" class="form-label">Навык</label>
+                        <select class="form-select" id="skill" name="skill" required>
+                            <option value="">Выберите навык</option>
+                            {% for skill in available_skills %}
+                                <option value="{{ skill.id }}">{{ skill.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="level" class="form-label">Уровень</label>
+                        <select class="form-select" id="level" name="level" required>
+                            <option value="beginner">Начальный</option>
+                            <option value="intermediate">Средний</option>
+                            <option value="advanced">Продвинутый</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна редактирования навыков -->
+{% for user_skill in user_skills %}
+<div class="modal fade" id="editSkillModal{{ user_skill.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать навык</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'edit_skill' user_skill.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="level{{ user_skill.id }}" class="form-label">Уровень</label>
+                        <select class="form-select" id="level{{ user_skill.id }}" name="level" required>
+                            <option value="beginner" {% if user_skill.level == 'beginner' %}selected{% endif %}>Начальный</option>
+                            <option value="intermediate" {% if user_skill.level == 'intermediate' %}selected{% endif %}>Средний</option>
+                            <option value="advanced" {% if user_skill.level == 'advanced' %}selected{% endif %}>Продвинутый</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

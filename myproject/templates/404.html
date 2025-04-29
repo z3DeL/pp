@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Страница не найдена{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-1">404</h1>
+            <h2 class="mb-4">Страница не найдена</h2>
+            <p class="lead mb-4">Извините, запрашиваемая страница не существует.</p>
+            <div class="suggestions mb-4">
+                <h3>Что можно сделать:</h3>
+                <ul class="list-unstyled">
+                    <li>Проверьте правильность URL</li>
+                    <li>Убедитесь, что запрашиваемый ресурс существует</li>
+                    <li>Попробуйте обновить страницу</li>
+                    <li>Вернитесь на главную страницу</li>
+                </ul>
+            </div>
+            <a href="{% url 'home' %}" class="btn btn-primary">Вернуться на главную</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
