@@ -1136,4 +1136,4 @@ def download_resume(request, application_id):
     except Exception as e:
         # Log other potential errors
         print(f"Error downloading resume: {e}")
-        raise Http404("Не удалось загрузить резюме.") 
+        raise Http404("Не удалось загрузить резюме.")
