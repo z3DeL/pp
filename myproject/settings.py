@@ -146,3 +146,26 @@ REST_FRAMEWORK = {
 
 # Показывать кастомные страницы ошибок даже в режиме отладки
 DEBUG_PROPAGATE_EXCEPTIONS = True
+
+# Настройки для Yandex Object Storage
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+
+AWS_STORAGE_BUCKET_NAME = 'urfu-vacancies'  # Имя вашего бакета
+AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
+AWS_S3_REGION_NAME = 'ru-central1' # Например, 'ru-central1'
+AWS_S3_FILE_OVERWRITE = False  # Не перезаписывать файлы по умолчанию
+AWS_DEFAULT_ACL = 'public-read'  # Делать файлы публично доступными для чтения
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400', # Контроль кэширования (1 день)
+}
+AWS_LOCATION = 'static' # Папка внутри бакета для статических файлов
+STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCATION}/'
+
+# Если вы также хотите хранить медиафайлы (загружаемые пользователями) в Object Storage:
+# MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/' # Папка для медиафайлов
+# MEDIA_ROOT = MEDIA_URL # Для django-storages это не путь к файловой системе
