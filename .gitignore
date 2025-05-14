@@ -23,4 +23,7 @@ db.sqlite3-journal
 .vscode/
 .idea/
 .DS_Store
-*.swp 
+*.swp
+
+# Environment variables
+.env 

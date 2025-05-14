@@ -1,9 +1,14 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from django.db import IntegrityError
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = 'django-insecure-your-secret-key-here'
 
@@ -152,8 +157,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+AWS_ACCESS_KEY_ID = os.environ.get('YC_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('YC_SECRET_ACCESS_KEY')
 
 AWS_STORAGE_BUCKET_NAME = 'urfu-vacancies'  # Имя вашего бакета
 AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
