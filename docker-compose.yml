@@ -10,6 +10,7 @@ services:
       - "8080:8080"
     environment:
       - DEBUG=False
+      - DISABLE_YC_STORAGE=True
       - YC_ACCESS_KEY_ID=${YC_ACCESS_KEY_ID}
       - YC_SECRET_ACCESS_KEY=${YC_SECRET_ACCESS_KEY}
       - AWS_STORAGE_BUCKET_NAME=urfu-vacancies
