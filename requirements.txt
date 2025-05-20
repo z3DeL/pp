@@ -4,3 +4,7 @@ drf-yasg
 whitenoise
 gunicorn
 Pillow
+boto3
+django-storages
+python-dotenv
+psycopg2-binary
