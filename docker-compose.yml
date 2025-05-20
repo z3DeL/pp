@@ -1,8 +1,26 @@
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: /app/entrypoint.sh
     volumes:
       - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
-      - "8000:8000" 
+      - "8080:8080"
+    environment:
+      - DEBUG=False
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      - YC_ACCESS_KEY_ID=${YC_ACCESS_KEY_ID}
+      - YC_SECRET_ACCESS_KEY=${YC_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=urfu-vacancies
+      - AWS_S3_ENDPOINT_URL=https://storage.yandexcloud.net
+      - AWS_S3_REGION_NAME=ru-central1
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin12345
+
+volumes:
+  static_volume:
+  media_volume: 

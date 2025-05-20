@@ -1,0 +1,39 @@
+version: '1.0'
+name: django-app
+app:
+  image:
+    registry: crp00000000000000000
+    name: myproject
+    tag: latest
+  resources:
+    memory: 512M
+    cores: 1
+  environment:
+    DEBUG: "False"
+    DB_ENGINE: "django.db.backends.sqlite3"
+    DB_NAME: "/app/db.sqlite3"
+    YC_ACCESS_KEY_ID: "${YC_ACCESS_KEY_ID}"
+    YC_SECRET_ACCESS_KEY: "${YC_SECRET_ACCESS_KEY}"
+    AWS_STORAGE_BUCKET_NAME: "urfu-vacancies"
+    AWS_S3_ENDPOINT_URL: "https://storage.yandexcloud.net"
+    AWS_S3_REGION_NAME: "ru-central1"
+  volumes:
+    - id: static-data
+      path: /app/staticfiles
+    - id: media-data
+      path: /app/media
+    - id: db-data
+      path: /app/db.sqlite3
+  entrypoint: ["/app/entrypoint.sh"]
+routes:
+  - http:
+      path: /static/{file+}
+      static_dir: /app/staticfiles
+      methods: [GET]
+  - http:
+      path: /media/{file+}
+      static_dir: /app/media
+      methods: [GET]
+  - http:
+      path: /{path+}
+      methods: [GET, POST, PUT, DELETE, OPTIONS] 

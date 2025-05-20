@@ -16,8 +16,14 @@ RUN pip install -r requirements.txt
 # Copy project
 COPY . /app/
 
-# Expose port 8000
-EXPOSE 8000
+# Сделать entrypoint.sh исполняемым
+RUN chmod +x /app/entrypoint.sh
 
-# Run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] 
+# Создать необходимые директории
+RUN mkdir -p /app/staticfiles /app/media
+
+# Expose port 8080
+EXPOSE 8080
+
+# Run the application using entrypoint script
+CMD ["/app/entrypoint.sh"] 
